@@ -13,6 +13,7 @@ Encontrar rápido contenido dentro de Blackboard (global o por curso) usando nav
 
 1) **Asegurar sesión**
 - Abrir Blackboard en el navegador con la tool `browser`.
+- Si el usuario menciona que ya lo tiene abierto en su Chrome (con extensión/Browser Relay), usar **profile="chrome"** y pedirle que **adjunte la pestaña** (badge ON) antes de intentar clicks.
 - Si no hay sesión activa, **pedir al usuario que inicie sesión manualmente** (SSO). No solicitar passwords.
 
 2) **Elegir alcance**
@@ -27,7 +28,8 @@ Encontrar rápido contenido dentro de Blackboard (global o por curso) usando nav
 
 4) **Entregar resultado útil**
 - Enviar: **ruta/clics exactos** (ej. “Courses → X → Course Content → Week 3 → PDF …”), **link** si existe, y **qué encontró**.
-- Si el usuario pidió “descargar”, pedir confirmación antes de descargar/subir archivos.
+- Incluir, cuando aplique: **fecha límite**, **entregable**, **peso/rúbrica** (si está visible).
+- Si el usuario pidió “descargar” o “sube el archivo”, pedir confirmación antes de descargar/subir archivos.
 
 ## Playbook por tipo de pedido
 
@@ -55,7 +57,7 @@ Encontrar rápido contenido dentro de Blackboard (global o por curso) usando nav
 
 ## Notas de UI (fragilidad)
 - Blackboard cambia labels (“Course Content” vs “Content” vs “Materials”). Priorizar **búsqueda por intención**, no por label exacto.
-- Si algo falla por UI distinta, hacer `browser.snapshot` y buscar por:
+- Si algo falla por UI distinta, hacer `browser.snapshot` (ideal: `refs="aria"`) y buscar por:
   - Inputs con placeholder “Search”
   - Menús laterales del curso
   - Secciones: Announcements / Assignments / Grades / Messages / Files
