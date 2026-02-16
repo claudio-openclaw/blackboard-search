@@ -83,6 +83,10 @@ Use these scripts to run Blackboard checks with persistent session + determinist
   - Default report: `/home/openclaw/.openclaw/workspace/reports/blackboard/activities-latest.md`.
   - Output status: `BLACKBOARD_CHANGED` | `BLACKBOARD_NO_CHANGES` | `BLACKBOARD_ERROR`.
 
+- `scripts/watch_pipeline.sh`
+  - Orchestrates full flow: `login_bootstrap` (only if auth is required) → `stream_extract` → `stream_diff_notify`.
+  - Designed for cron use.
+
 ### Canonical JSON shape (`latest.json`)
 
 ```json

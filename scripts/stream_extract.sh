@@ -18,8 +18,9 @@ node - "$RAW" "$OUT_JSON" <<'NODE'
 const fs = require('fs');
 const crypto = require('crypto');
 
-const raw = JSON.parse(process.argv[2]);
+let raw = JSON.parse(process.argv[2]);
 const out = process.argv[3];
+if (typeof raw === 'string') raw = JSON.parse(raw);
 
 if (!raw.url || !raw.url.includes('blackboard.up.edu.mx')) {
   console.log('BLACKBOARD_AUTH_REQUIRED');
