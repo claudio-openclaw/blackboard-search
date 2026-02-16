@@ -63,6 +63,45 @@ Quickly locate content inside Blackboard (globally or within a specific course) 
   - The course side navigation
   - Sections like: Announcements / Assignments / Grades / Messages / Files
 
+## Scripts (automation-ready)
+
+Use these scripts to run Blackboard checks with persistent session + deterministic outputs:
+
+- `scripts/login_bootstrap.sh`
+  - One-time bootstrap for Blackboard + Google SSO.
+  - Waits for manual 2FA approval when required.
+  - Output status: `BLACKBOARD_LOGIN_OK` | `BLACKBOARD_2FA_PENDING` | `BLACKBOARD_AUTH_REQUIRED`.
+
+- `scripts/stream_extract.sh`
+  - Extracts stream events from `/ultra/stream` into canonical JSON.
+  - Default output file: `/home/openclaw/.openclaw/workspace/out/blackboard/latest.json`.
+  - Output status: `BLACKBOARD_EXTRACT_OK` | `BLACKBOARD_AUTH_REQUIRED`.
+
+- `scripts/stream_diff_notify.sh`
+  - Compares latest extract vs previous digest, writes markdown report, updates state.
+  - Default state: `/home/openclaw/.openclaw/workspace/memory/blackboard-watch-state.json`.
+  - Default report: `/home/openclaw/.openclaw/workspace/reports/blackboard/activities-latest.md`.
+  - Output status: `BLACKBOARD_CHANGED` | `BLACKBOARD_NO_CHANGES` | `BLACKBOARD_ERROR`.
+
+- `scripts/watch_pipeline.sh`
+  - Orchestrates full flow: `login_bootstrap` (only if auth is required) → `stream_extract` → `stream_diff_notify`.
+  - Designed for cron use.
+
+### Canonical JSON shape (`latest.json`)
+
+```json
+{
+  "generatedAt": "ISO-8601",
+  "source": "https://blackboard.up.edu.mx/ultra/stream",
+  "title": "Actividad",
+  "count": 2,
+  "digest": "sha256:...",
+  "events": [
+    { "course": "...", "type": "due|added", "text": "..." }
+  ]
+}
+```
+
 ## References
 
 - If you need heuristics for UI elements and common labels, see: `references/blackboard-ui.md`.
