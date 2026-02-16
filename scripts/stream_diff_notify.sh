@@ -27,6 +27,7 @@ let prev = null;
 try { prev = JSON.parse(fs.readFileSync(statePath, 'utf8')); } catch {}
 
 const changed = !prev || prev.digest !== latest.digest;
+const pending = (latest.events || []).filter(e => e.type === 'due');
 
 const md = [];
 md.push('# Blackboard — Actividad reciente');
@@ -53,6 +54,16 @@ if (changed) {
   md.push('## Estado');
   md.push('- Sin cambios desde la última ejecución.');
 }
+md.push('');
+md.push(`## Pendientes actuales (${pending.length})`);
+md.push('');
+if (!pending.length) {
+  md.push('- No se detectaron pendientes en el stream.');
+} else {
+  for (const e of pending) {
+    md.push(`- **${e.course}** — ${e.text} _(fecha exacta no visible en stream)_`);
+  }
+}
 
 fs.writeFileSync(reportPath, md.join('\n'));
 fs.writeFileSync(statePath, JSON.stringify({
@@ -70,5 +81,9 @@ if (changed) {
 } else {
   console.log('BLACKBOARD_NO_CHANGES');
 }
+console.log('PENDIENTES_ACTUALES');
+if (!pending.length) console.log('- Ninguno');
+else for (const e of pending.slice(0, 8)) console.log(`- ${e.course}: ${e.text} (fecha exacta no visible en stream)`);
+console.log('SUGERENCIA_AYUDA: ¿Quieres que te ayude con alguna de estas actividades?');
 console.log(reportPath);
 NODE
