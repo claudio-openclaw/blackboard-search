@@ -1,107 +1,91 @@
 ---
 name: blackboard-search
-description: Search and retrieve content from Blackboard Learn (announcements, course materials, assignments, grades, messages, and files). Use when the user asks to “search Blackboard”, “find X in the course”, “locate the announcement/assignment/document”, “what does the syllabus say”, or when you need to navigate Blackboard’s UI to locate a specific resource inside a course.
+description: Search and retrieve content from Blackboard Learn (Ultra) (announcements, course materials, assignments, grades, messages, and files). Use when the user asks to “buscar en Blackboard”, “encuentra X en el curso”, “ubica el anuncio/tarea/documento”, “qué dice el syllabus”, or when you need to navigate Blackboard’s UI to locate a specific resource inside a course.
+metadata: {"openclaw":{"emoji":"🎓"}}
 ---
 
 # Blackboard Search
 
-## Goal
+## Cuándo usar este skill
 
-Quickly locate content inside Blackboard (globally or within a specific course) using guided navigation + in-UI search, without asking for passwords in chat.
+Usa este skill cuando el usuario pida encontrar o resumir información de Blackboard Ultra:
+- pendientes / fechas de entrega
+- tareas / anuncios / syllabus
+- materiales (PDF, archivos, links)
+- mensajes o calificaciones dentro de Blackboard
 
-## Recommended fast flow
+## Objetivo
 
-1) **Ensure you have a session**
-- Open Blackboard in the browser using the `browser` tool.
-- If the user says they already have it open in Chrome (with the extension/Browser Relay), use **profile="chrome"** and ask them to **attach the tab** (badge ON) before attempting any clicks.
-- If there is no active session, **ask the user to sign in manually** (SSO). Do not request passwords.
+Encontrar rápido contenido dentro de Blackboard (global o por curso) usando navegación guiada + búsqueda en UI, sin exponer secretos ni pedir contraseñas por chat.
 
-2) **Choose scope**
-- **Inside a course**: when the user mentions a specific class/course.
-- **Global**: when they don’t know which course contains the resource.
+## Flujo recomendado
 
-3) **Search**
-- Try Blackboard’s **built-in search** first (if available in that view).
-- If search is missing/limited, use:
-  - **Content Collection / Files / Course Content** + search/filters
-  - **Ctrl/Cmd+F** to find text on long pages
+1) **Asegurar sesión SSO**
+- Abrir Blackboard con `agent-browser`.
+- Si no hay sesión activa, pedir login manual SSO (sin pedir password).
+- En host headless con Xvfb: usar `DISPLAY=:1` + `agent-browser --headed`.
+- Si existe botón de Google SSO, puede clickearse por UI y esperar aprobación del usuario.
 
-4) **Deliver a useful result**
-- Provide: the **exact click path** (e.g., “Courses → X → Course Content → Week 3 → PDF …”), a **link** if available, and **what you found**.
-- When applicable, include: **due date**, **deliverable**, **weight/rubric** (if visible).
-- If the user asks you to “download” or “upload/submit”, ask for confirmation before downloading/uploading files.
+2) **Elegir alcance**
+- **Curso específico**: cuando el usuario menciona materia.
+- **Global**: cuando no sabe en qué curso está el recurso.
 
-## Playbooks by request type
+3) **Buscar**
+- Primero usar búsqueda nativa de Blackboard (si existe en esa vista).
+- Si no, navegar por secciones: Announcements, Course Content/Materials, Assignments, Files/Content Collection.
+- En páginas largas, usar búsqueda textual (`snapshot` + encontrar texto clave).
 
-### A) “Find X in course Y”
-1. Go to **Courses** → open **course Y**.
-2. Check first:
-   - **Announcements** (if it sounds like a notice)
-   - **Course Content / Content / Materials** (if it sounds like a file)
-   - **Assignments** (if it sounds like an assignment)
-   - **Syllabus / Course Information** (if it sounds like a syllabus/overview)
-3. Use search inside that section (if available) or navigate modules/weeks.
-4. If it’s not there, open the course’s **Files/Content Collection** and search by name/type.
+4) **Entregar resultado útil**
+- Responder con ruta exacta (clics), hallazgo y link cuando exista.
+- Si pidió descargar/subir archivos, confirmar antes.
 
-### B) “I don’t know which course it’s in”
-1. Go to the main landing page (course list).
-2. Try **global search** (if the instance supports it).
-3. If global search is not effective:
-   - Ask the user for a shortlist of the 3–6 most likely courses
-   - Repeat playbook A using the file name/keywords.
+## Fallbacks (importante)
 
-### C) “Tell me what it says / summarize it” (syllabus, announcement, assignment instructions)
-1. Open the resource.
-2. Extract what matters (titles, dates, rubric, deliverables).
-3. If it’s long: summarize in bullets and highlight **deadlines and requirements**.
+Si el endpoint de stream falla (`401` o `TypeError: Failed to fetch`):
+- no bloquearse en API,
+- usar `agent-browser snapshot` en `/ultra/stream`,
+- extraer pendientes desde “Próximo/Hoy/Reciente” y reportar igual.
 
-## UI notes (fragility)
+## Playbook por tipo de pedido
 
-- Blackboard labels vary (“Course Content” vs “Content” vs “Materials”). Prioritize **intent-based navigation**, not exact labels.
-- If something fails due to UI differences, take a `browser.snapshot` (ideally `refs="aria"`) and look for:
-  - Inputs with placeholder “Search”
-  - The course side navigation
-  - Sections like: Announcements / Assignments / Grades / Messages / Files
+### A) “Encuentra X en el curso Y”
+1. Ir a **Courses** → abrir **curso Y**.
+2. Revisar: Announcements, Course Content/Materials, Assignments, Syllabus/Course Information.
+3. Buscar por keyword dentro de la sección.
+4. Si no aparece, ir a Files/Content Collection del curso.
 
-## Scripts (automation-ready)
+### B) “No sé en qué curso está”
+1. Ir a vista principal de cursos.
+2. Intentar búsqueda global.
+3. Si no sirve, acotar a 3–6 cursos probables y repetir flujo A.
 
-Use these scripts to run Blackboard checks with persistent session + deterministic outputs:
+### C) “Dime qué dice / resúmelo”
+1. Abrir recurso.
+2. Extraer puntos clave (fechas, entregables, rúbrica, formato).
+3. Resumir en bullets y resaltar requisitos críticos.
 
-- `scripts/login_bootstrap.sh`
-  - One-time bootstrap for Blackboard + Google SSO.
-  - Waits for manual 2FA approval when required.
-  - Output status: `BLACKBOARD_LOGIN_OK` | `BLACKBOARD_2FA_PENDING` | `BLACKBOARD_AUTH_REQUIRED`.
+## Límites y seguridad
 
-- `scripts/stream_extract.sh`
-  - Extracts stream events from `/ultra/stream` into canonical JSON.
-  - Default output file: `/home/openclaw/.openclaw/workspace/out/blackboard/latest.json`.
-  - Output status: `BLACKBOARD_EXTRACT_OK` | `BLACKBOARD_AUTH_REQUIRED`.
+- No pedir ni procesar contraseñas por chat.
+- No inventar contenido si no aparece en Blackboard.
+- Reportar incertidumbre cuando la UI esté incompleta o cambie etiquetas.
 
-- `scripts/stream_diff_notify.sh`
-  - Compares latest extract vs previous digest, writes markdown report, updates state.
-  - Default state: `/home/openclaw/.openclaw/workspace/memory/blackboard-watch-state.json`.
-  - Default report: `/home/openclaw/.openclaw/workspace/reports/blackboard/activities-latest.md`.
-  - Output status: `BLACKBOARD_CHANGED` | `BLACKBOARD_NO_CHANGES` | `BLACKBOARD_ERROR`.
+## Scripts disponibles
 
-- `scripts/watch_pipeline.sh`
-  - Orchestrates full flow: `login_bootstrap` (only if auth is required) → `stream_extract` → `stream_diff_notify`.
-  - Designed for cron use.
+- `scripts/blackboard_activities.sh` — end-to-end; el usuario solo inicia sesión y genera reporte Markdown.
+- `scripts/ultra_fetch_stream.js` — snippet para DevTools (fetch del Ultra Stream).
+- `scripts/ultra_fetch_stream_agent_browser.sh` — fetch del Stream con agent-browser (headed).
+- `scripts/parse_activities.js` — JSON stream → Markdown.
+- `scripts/README.md` — guía de uso de scripts.
 
-### Canonical JSON shape (`latest.json`)
+## Troubleshooting rápido
 
-```json
-{
-  "generatedAt": "ISO-8601",
-  "source": "https://blackboard.up.edu.mx/ultra/stream",
-  "title": "Actividad",
-  "count": 2,
-  "digest": "sha256:...",
-  "events": [
-    { "course": "...", "type": "due|added", "text": "..." }
-  ]
-}
-```
+- **`Missing X server or $DISPLAY`**: usar `DISPLAY=:1` si hay Xvfb.
+- **`401 API request is not authenticated`**: sesión expirada o no iniciada; reloguear en `/ultra/stream`.
+- **`TypeError: Failed to fetch`**: usar fallback por `snapshot` de UI.
+- Señales de sesión válida: nombre de usuario en navbar, cursos visibles, cards en “Próximo/Hoy/Reciente”.
 
-## References
+## Referencias
 
-- If you need heuristics for UI elements and common labels, see: `references/blackboard-ui.md`.
+- `references/blackboard-ui.md`
+- `references/guide-ultra-stream.md`
