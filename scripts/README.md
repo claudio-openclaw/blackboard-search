@@ -18,7 +18,21 @@ Opcional JSON + MD:
 ./scripts/crawl_courses_deep.sh --out-dir ./out/deep
 ```
 
-Luego normaliza:
+### Pipeline todo-en-uno
+
+```bash
+./scripts/run_deep_crawl.sh --raw-dir ./out/deep/raw --out-dir ./out
+```
+
+Con fecha de corte explícita:
+
+```bash
+./scripts/run_deep_crawl.sh --raw-dir ./out/deep/raw --out-dir ./out --now 2026-02-17T00:00:00-06:00
+```
+
+### Pipeline paso a paso (manual)
+
+Normaliza:
 
 ```bash
 node ./scripts/extract_tasks_from_outline.js ./out/deep/raw > ./out/deep/normalized/tasks.json
