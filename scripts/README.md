@@ -18,6 +18,23 @@ Opcional JSON + MD:
 ./scripts/crawl_courses_deep.sh --out-dir ./out/deep
 ```
 
+### Auto-fetch real desde Blackboard (nuevo)
+
+Con sesión ya autenticada en `agent-browser`:
+
+```bash
+TERM_PREFIX=ML26PRIMAVERA ./scripts/fetch_raw_from_blackboard.sh --out-dir ./out/deep --session blackboard
+```
+
+Esto genera:
+- `./out/deep/raw/active-full.json`
+
+Luego puedes correr el pipeline completo:
+
+```bash
+./scripts/run_deep_crawl.sh --raw-dir ./out/deep/raw --out-dir ./out --now 2026-02-17T00:00:00-06:00
+```
+
 ### Pipeline todo-en-uno
 
 ```bash

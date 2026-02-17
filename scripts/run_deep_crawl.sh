@@ -30,7 +30,12 @@ if [[ ! -d "$RAW_DIR" ]]; then
   exit 2
 fi
 
-node "$SCRIPT_DIR/extract_tasks_from_outline.js" "$RAW_DIR" > "$NORMALIZED_JSON"
+if [[ -f "$RAW_DIR/active-full.json" ]]; then
+  node "$SCRIPT_DIR/build_tasks_from_active_full.js" "$RAW_DIR/active-full.json" > "$NORMALIZED_JSON"
+else
+  node "$SCRIPT_DIR/extract_tasks_from_outline.js" "$RAW_DIR" > "$NORMALIZED_JSON"
+fi
+
 node "$SCRIPT_DIR/merge_course_reports.js" "$NORMALIZED_JSON" > "$OUT_DIR/reporte-maestro.md"
 
 if [[ -n "$NOW_ARG" ]]; then
