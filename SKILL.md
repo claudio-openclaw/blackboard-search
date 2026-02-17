@@ -1,104 +1,87 @@
 ---
 name: blackboard-search
-description: Search and retrieve content from Blackboard Learn (Ultra) (announcements, course materials, assignments, grades, messages, and files). Use when the user asks to “buscar en Blackboard”, “encuentra X en el curso”, “ubica el anuncio/tarea/documento”, “qué dice el syllabus”, or when you need to navigate Blackboard’s UI to locate a specific resource inside a course.
-metadata: {"openclaw":{"emoji":"🎓"}}
+description: Search and retrieve content from Blackboard Learn Ultra (announcements, assignments, syllabus, grades, messages, files) and extract upcoming tasks. Use when user asks to find something in Blackboard, summarize course content, locate due dates, or sync Blackboard tasks into Obsidian/TaskNotes.
 ---
 
 # Blackboard Search
 
-## Cuándo usar este skill
+Repositorio oficial: `https://github.com/claudio-openclaw/blackboard-search`
 
-- “¿Qué pendientes tengo en Blackboard?”
-- “Revísame todas las tareas de todos mis cursos”
-- “Dime la descripción completa de cada actividad”
-- “Ubica el PDF con instrucciones de la tarea X”
+Objetivo: encontrar rápido contenido real en Blackboard y entregar resultado accionable (ruta exacta, enlace y resumen).
 
-## Objetivo
+## Protocolo obligatorio (orden fijo)
 
-Extraer tareas reales (no inventadas) desde Blackboard Ultra con suficiente detalle para decidir qué hacer: fecha, tipo, puntos, intentos, instrucciones y adjuntos (PDF/DOC/PPT/enlaces).
+1. **Abrir Blackboard**
+   - Ir a `https://blackboard.up.edu.mx/ultra/stream`.
+   - Verificar sesión con señales UI (nombre del usuario + menú Cursos/Calendario).
 
-## Modos de trabajo
+2. **Si no hay sesión, resolver login sin pedir credenciales**
+   - Click en SSO (Google) y esperar que el usuario termine login.
+   - Nunca pedir password por chat.
 
-### Modo rápido (stream)
-Usar cuando el usuario solo quiere pendientes inmediatos.
-- `/ultra/stream`
-- leer `Próximo/Hoy/Reciente`
-- entregar resumen corto
+3. **Intentar extracción por API Ultra Stream**
+   - Usar `fetch('/learn/api/v1/streams/ultra', { method:'POST', credentials:'include', ... })` desde la página.
 
-### Modo profundo (deep crawl)
-Usar cuando el usuario pida “todas las tareas”, “todas las descripciones”, o auditoría completa por curso.
-- recorrer curso por curso en `Contenido`
-- expandir módulos y `Cargar más`
-- abrir cada actividad evaluable
-- capturar metadatos + instrucciones + adjuntos
+4. **Si API falla (`401` o `TypeError: Failed to fetch`), usar fallback UI (obligatorio)**
+   - No bloquearse.
+   - Extraer tareas de la sección **Próximo** en `Flujo de actividades` con `agent-browser snapshot` / `get text body`.
+   - Reportar igual aunque no haya JSON.
 
-## Flujo recomendado (deep crawl)
+5. **Entregar siempre formato útil**
+   - Curso
+   - Título de tarea/recurso
+   - Fecha/hora de entrega (si existe)
+   - Ruta de clics exacta
+   - URL (si existe)
 
-1) **Asegurar sesión SSO**
-- abrir Blackboard con `agent-browser`
-- no pedir contraseñas por chat
-- en host headless con Xvfb: usar `DISPLAY=:1`
+## Flujos por tipo de solicitud
 
-2) **Enumerar cursos activos**
-- obtener cursos abiertos de la vista `Cursos`
-- priorizar período actual
+### A) "Encuentra X en curso Y"
+1. Ir a `Cursos` → abrir curso.
+2. Revisar en orden: `Announcements` → `Course Content` → `Assignments` → `Syllabus`.
+3. Si no aparece, revisar `Files/Content Collection`.
+4. Devolver ruta exacta + hallazgo.
 
-3) **Recorrer contenido por curso**
-- abrir `Contenido`
-- expandir todos los bloques
-- detectar actividades evaluables (assessment, formulario, debate, quiz, etc.)
+### B) "No sé en qué curso está"
+1. Probar búsqueda global si existe.
+2. Si no, revisar cursos probables y repetir flujo A.
+3. Pedir al usuario acotar si hay demasiados cursos.
 
-4) **Entrar a cada actividad**
-Extraer:
-- título
-- tipo
-- deadline
-- puntos
-- intentos
-- reglas (late submissions, cierre de intentos)
-- instrucciones visibles
+### C) "Resúmelo"
+1. Abrir recurso.
+2. Extraer entregables, rúbrica, restricciones y fechas.
+3. Responder en bullets cortos con énfasis en fechas.
 
-5) **Capturar adjuntos por actividad**
-- detectar PDF/DOC/PPT/enlaces
-- guardar nombre + URL
-- marcar confianza de vínculo:
-  - `alto`: adjunto dentro del ítem
-  - `medio`: adjunto en el mismo módulo
-  - `bajo`: adjunto cercano pero ambiguo
+### D) "Pásalo a Obsidian/TaskNotes"
+1. Obtener pendientes por API o fallback UI.
+2. Mapear curso Blackboard → materia de `UP/Semestres/**` por similitud.
+3. Crear/actualizar notas en formato TaskNotes en `TaskNotes/Tasks`.
+4. Incluir siempre detalles (curso, fuente, due, tipo de evento, hash).
 
-6) **Salida estandarizada**
-- Curso
-- Tarea
-- Tipo
-- Deadline
-- Puntos/Intentos
-- Resumen de instrucciones
-- Adjuntos (links)
-- Confianza del vínculo
-- Estado (`completo` / `parcial`)
+## Definition of done
 
-## Fallbacks obligatorios
+La tarea está completa solo si entregas:
+- Hallazgo verificable (o confirmación explícita de "sin resultados"),
+- Ruta de navegación reproducible,
+- Fechas de entrega cuando existan,
+- Y, si se pidió, nota creada/actualizada en Obsidian TaskNotes.
 
-- `401 API request is not authenticated` → reloguear SSO
-- `TypeError: Failed to fetch` en endpoint de stream → fallback a `snapshot` UI
-- si no hay instrucciones en overview → intentar rutas alternas y módulo padre
-- si no hay texto utilizable → reportar “sin instrucciones visibles”
+## Errores comunes → acción inmediata
 
-## Límites y seguridad
-
-- nunca pedir credenciales por chat
-- no inventar instrucciones o fechas
-- indicar incertidumbre explícita cuando Blackboard oculte contenido
+- `Missing X server or $DISPLAY`
+  - Usar sesión que ya tenga navegador activo; si no, correr en entorno con display.
+- `401 API request is not authenticated`
+  - Sesión expirada: reabrir Stream y relogin SSO.
+- `TypeError: Failed to fetch`
+  - Saltar a fallback UI y extraer pendientes desde `Próximo`.
 
 ## Scripts disponibles
 
-- `scripts/blackboard_activities.sh` — quick report del stream
-- `scripts/crawl_courses_deep.sh` — orquesta deep crawl por cursos (base)
-- `scripts/extract_tasks_from_outline.js` — normaliza tareas desde JSON/snapshots
-- `scripts/merge_course_reports.js` — consolida reportes por curso
-- `scripts/README.md` — cómo ejecutar y cómo interpretar salida
+- `scripts/blackboard_activities.sh` — flujo E2E (login + extracción + markdown)
+- `scripts/ultra_fetch_stream.js` — snippet para DevTools
+- `scripts/ultra_fetch_stream_agent_browser.sh` — fetch con agent-browser
+- `scripts/parse_activities.js` — stream JSON → markdown
 
-## Referencias
+## Regla de oro
 
-- `references/blackboard-ui.md`
-- `references/guide-ultra-stream.md`
+Si la API falla pero la UI muestra pendientes, **la tarea NO está bloqueada**. Extraer de UI y seguir.

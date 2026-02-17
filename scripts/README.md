@@ -1,95 +1,57 @@
 # Scripts — blackboard-search
 
-## 1) Modo rápido: Stream → Markdown
+Estos scripts son helpers locales para **sacar JSON** de Blackboard Learn Ultra (usando tu sesión logueada) y para **convertir ese JSON a Markdown**.
+
+---
+
+## 1) Obtener el JSON del Stream (Ultra)
+
+### Opción A (simple): `ultra_fetch_stream.js` (snippet para DevTools)
+
+1. Abre: https://blackboard.up.edu.mx/ultra/stream
+2. Inicia sesión (SSO)
+3. Abre DevTools → Console
+4. Genera el snippet:
+
+```bash
+node scripts/ultra_fetch_stream.js
+```
+
+5. Pégalo en la consola y copia el JSON a un archivo (ej. `stream.json`).
+
+### Opción B (semi-automático): `ultra_fetch_stream_agent_browser.sh`
+
+Automatiza el `fetch()` dentro del browser con **agent-browser** (modo `--headed`).
+
+```bash
+./scripts/ultra_fetch_stream_agent_browser.sh --out ./stream.json
+```
+
+> Requiere ambiente con GUI para abrir el navegador en modo headed.
+> En hosts headless con Xvfb, usa `DISPLAY=:1` al ejecutar `agent-browser`.
+
+---
+
+## 2) Convertir JSON → Markdown (actividades)
+
+### parse_activities.js
+
+```bash
+node scripts/parse_activities.js ./stream.json > ./blackboard-activities.md
+```
+
+> Nota: este parser no hace requests. Está pensado para usarse junto con el fetch dentro del browser (misma sesión logueada).
+
+---
+
+## 3) Todo-en-uno (lo único que haces es login)
 
 ```bash
 ./scripts/blackboard_activities.sh --out-md ./blackboard-activities.md
 ```
 
-Opcional JSON + MD:
+Si también quieres guardar el JSON:
 
 ```bash
 ./scripts/blackboard_activities.sh --out-json ./stream.json --out-md ./blackboard-activities.md
 ```
-
-## 2) Modo profundo: Deep Crawl (base)
-
-```bash
-./scripts/crawl_courses_deep.sh --out-dir ./out/deep
-```
-
-### Auto-fetch real desde Blackboard (nuevo)
-
-Con sesión ya autenticada en `agent-browser`:
-
-```bash
-TERM_PREFIX=ML26PRIMAVERA ./scripts/fetch_raw_from_blackboard.sh --out-dir ./out/deep --session blackboard
-```
-
-Esto genera:
-- `./out/deep/raw/active-full.json`
-
-Luego puedes correr el pipeline completo:
-
-```bash
-./scripts/run_deep_crawl.sh --raw-dir ./out/deep/raw --out-dir ./out --now 2026-02-17T00:00:00-06:00
-```
-
-### Pipeline todo-en-uno
-
-```bash
-./scripts/run_deep_crawl.sh --raw-dir ./out/deep/raw --out-dir ./out
-```
-
-Con fecha de corte explícita:
-
-```bash
-./scripts/run_deep_crawl.sh --raw-dir ./out/deep/raw --out-dir ./out --now 2026-02-17T00:00:00-06:00
-```
-
-### Pipeline paso a paso (manual)
-
-Normaliza:
-
-```bash
-node ./scripts/extract_tasks_from_outline.js ./out/deep/raw > ./out/deep/normalized/tasks.json
-```
-
-Consolida a reporte maestro:
-
-```bash
-node ./scripts/merge_course_reports.js ./out/deep/normalized/tasks.json > ./out/reporte-maestro.md
-```
-
-Filtra pendientes futuros y genera reportes limpios:
-
-```bash
-node ./scripts/filter_future_tasks.js ./out/deep/normalized/tasks.json --out-dir ./out
-```
-
-## Adjuntos de tareas (PDF/DOC/PPT)
-
-Modelo esperado por tarea:
-
-```json
-{
-  "title": "Trabajo X",
-  "attachments": [
-    {"name": "instrucciones.pdf", "url": "https://...", "confidence": "alto"}
-  ]
-}
-```
-
-- `alto`: adjunto dentro del ítem
-- `medio`: adjunto en mismo módulo
-- `bajo`: adjunto cercano pero ambiguo
-
-## Fallbacks
-
-- `Missing X server or $DISPLAY` → usar `DISPLAY=:1` (Xvfb)
-- `401 API request is not authenticated` → reloguear SSO
-- `TypeError: Failed to fetch` → usar `agent-browser snapshot` y extraer desde UI
-
-## Nota sobre paralelismo
-
-Blackboard + SSO puede invalidar sesiones en workers paralelos. Preferir barrido secuencial robusto por curso.

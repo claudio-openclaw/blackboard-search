@@ -1,34 +1,34 @@
-# Blackboard UI — Quick heuristics
+# Blackboard UI — Heurísticas rápidas
 
-Load this only when you need help unblocking navigation/labels.
+Cárgalo sólo si necesitas destrabar navegación/labels.
 
-## Common section names
-- Courses: **Courses**, **My Courses**, **Course List**
-- Content: **Course Content**, **Content**, **Materials**, **Learning Materials**
-- Announcements: **Announcements**
-- Assignments: **Assignments**, **Assessments**
-- Grades: **Grades**, **My Grades**, **Gradebook**
-- Messages: **Messages**, **Course Messages**
-- Files: **Files**, **Content Collection**
-- Info: **Syllabus**, **Course Information**, **Instructor Information**
+## Nombres comunes de secciones
+- Cursos: **Courses**, **My Courses**, **Course List**
+- Contenido: **Course Content**, **Content**, **Materials**, **Learning Materials**
+- Avisos: **Announcements**
+- Tareas: **Assignments**, **Assessments**
+- Calificaciones: **Grades**, **My Grades**, **Gradebook**
+- Mensajes: **Messages**, **Course Messages**
+- Archivos: **Files**, **Content Collection**
+- Información: **Syllabus**, **Course Information**, **Instructor Information**
 
-## Patterns to find search
-- Top bar input “Search”
-- Magnifying glass / search icon
-- Filters by type (Document, File, Assignment)
-- Sort by “Newest/Oldest”
+## Patrones para ubicar búsqueda
+- Barra superior con input “Search”
+- Lupa / icono de búsqueda
+- Filtros por tipo (Document, File, Assignment)
+- Orden por “Newest/Oldest”
 
-## Strategy when there is no search
-1) Open “Course Content”
-2) Expand modules/weeks
-3) Use Cmd/Ctrl+F on the current page
-4) Check “Files/Content Collection” to search by name (PDF/DOCX/PPT)
+## Estrategia cuando no hay búsqueda
+1) Abrir “Course Content”
+2) Expandir módulos/semanas
+3) Usar Cmd/Ctrl+F en la página actual
+4) Revisar “Files/Content Collection” para buscar por nombre (PDF/DOCX/PPT)
 
-## What to ask the user (low-friction)
-- Approximate exact file name (“Syllabus”, “Week 2 slides”, “Project 1”) or 2–3 keywords.
-- Likely course (if multiple, ask for a shortlist).
-- If searching by date: an approximate range.
+## Qué pedirle al usuario (sin fricción)
+- Nombre exacto aproximado del archivo (“Syllabus”, “Week 2 slides”, “Proyecto 1”) o 2–3 keywords.
+- Curso probable (si hay varios, pedir shortlist).
+- Si busca una fecha: rango aproximado.
 
-## Security / credentials
-- Don’t ask for passwords.
-- If it’s SSO, ask the user to sign in manually in the browser.
+## Seguridad / credenciales
+- No pedir contraseñas.
+- Si es SSO, pedir que el usuario haga login manual en el navegador.
