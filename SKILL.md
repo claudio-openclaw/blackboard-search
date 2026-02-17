@@ -1,6 +1,7 @@
 ---
 name: blackboard-search
 description: Search and retrieve content from Blackboard Learn Ultra (announcements, assignments, syllabus, grades, messages, files) and extract upcoming tasks. Use when user asks to find something in Blackboard, summarize course content, locate due dates, or sync Blackboard tasks into Obsidian/TaskNotes.
+metadata: {"openclaw":{"emoji":"🎓"}}
 ---
 
 # Blackboard Search
