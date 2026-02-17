@@ -30,6 +30,12 @@ Consolida a reporte maestro:
 node ./scripts/merge_course_reports.js ./out/deep/normalized/tasks.json > ./out/reporte-maestro.md
 ```
 
+Filtra pendientes futuros y genera reportes limpios:
+
+```bash
+node ./scripts/filter_future_tasks.js ./out/deep/normalized/tasks.json --out-dir ./out
+```
+
 ## Adjuntos de tareas (PDF/DOC/PPT)
 
 Modelo esperado por tarea:
